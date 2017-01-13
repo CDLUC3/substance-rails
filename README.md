@@ -40,6 +40,27 @@ You can also optionally include the following substance stylesheets. See the [Su
  *= require substance-pagestyle.css
 ```
 
+Then setup an editable div on your page (onclick event ties to the JS example below).
+```html
+  <div id="substance-form-area-<%= model.id %>" editable data-type="area" 
+       onclick="_handleChange(<%= model.id %>);">
+    <%= model.text.html_safe %>
+  </div>
+  
+  <input type="hidden" id="hidden-text-for<%= model.id %>" 
+         name="model[text]" val="<%= model.text %>" />
+```
+
+And add javascript that transfers the content of the editable div to an input field that will be passed to your controller once the form has been submitted by the user
+```js
+  function _handleChange(identifier){
+	  let forms = window.substanceForms;
+	  let data = { text: forms.getHTML('substance-form-area-' + identifier) };
+	
+	  $("#hidden-text-for-" + identifier).val(data['text']);
+  }
+```
+
 #### Support
 This gem is provided as-is. Issues should be reported here on [Github Issues](https://github.com/CDLUC3/substance-rails/issues)
 Please be advised though that we can only provide limited support for your local installations. 
