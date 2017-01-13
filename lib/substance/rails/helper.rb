@@ -8,6 +8,21 @@ module Substance
       # -----------------------------------------------------------
       def substance_javascript_handler_for_text_areas
         <<-JAVASCRIPT
+          let area = $(".substance-text-area:first");
+          let formEvents = $._data($(area)[0], "events");
+
+          /* If the form does not already have a submit handler */          
+          if(formEvents.indexOf('submit') < 0){
+            /* Loop through all of the form's substance text areas and handle them */
+            $(area.form).submit(function(e){
+              $(".substance-text-area").each(function(){
+                let identifier = $(this).prop('id');
+                _handleChange(identifier);
+              });
+            });
+          }
+        
+          /* Transfer the contents of substance text area to the hidden field */
           function _handleChange(identifier){
             let forms = window.substanceForms;
             let data = { 
@@ -27,8 +42,7 @@ module Substance
         
         <<-HTML
         <div id="substance-text-area-#{identifier}" 
-             editable data-type="area" 
-             onclick="_handleChange(#{identifier});">
+             editable data-type="area" class="substance-text-area">
           model.send(atrribute_name.to_sym)
         </div>
 
@@ -37,6 +51,7 @@ module Substance
                val="#{obj.send(attribute_name.to_sym)}" />
         HTML
       end
+      
     end
   end
 end
