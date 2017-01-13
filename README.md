@@ -37,28 +37,45 @@ You can also optionally include the following substance stylesheets. See the [Su
  *= require substance-pagestyle.next.css
  *= require substance-reset.css
  *= require substance-reset.next.css
- *= require substance-pagestyle.css
 ```
 
-Then setup an editable div on your page (onclick event ties to the JS example below).
+Add the javascript handlers to the top of you pages that will use the substance editor. The handlers will transfer the content of your substance text areas over to a hidden input field that will be passed to your controller once the form has been submitted by the user.
 ```html
-  <div id="substance-form-area-<%= model.id %>" editable data-type="area" 
-       onclick="_handleChange(<%= model.id %>);">
-    <%= model.text.html_safe %>
-  </div>
-  
-  <input type="hidden" id="hidden-text-for<%= model.id %>" 
-         name="model[text]" val="<%= model.text %>" />
+	<script type="text/javascript">
+		<%= substance_javascript_handler_for_text_areas.html_safe %>
+	</script>
 ```
 
-And add javascript that transfers the content of the editable div to an input field that will be passed to your controller once the form has been submitted by the user
-```js
-  function _handleChange(identifier){
-	  let forms = window.substanceForms;
-	  let data = { text: forms.getHTML('substance-form-area-' + identifier) };
+Then add Substance text areas within your forms by calling the helper and passing it your object and the name of the attribute that the text area should be tied to.
+You can add multiple substance text areas to a single form.
+```html
+  <form method='POST'>
+		
+		<!-- You other form elements here -->
+		
+		<%= substance_text_area_tag(user, 'bio').html_safe %>
+		
+		<!-- You other form elements here -->
+		
+	</form>
+```
+
+The above helper will produce the following html:
+```html
+  <div class="sc-rich-text-area">
+		<div tabindex="2" data-id="answer-e1515e043be1eff3c87d" 
+		     spellcheck="false" contenteditable="true"
+				 class="sc-surface sc-container-editor container-node answer-e1515e043be1eff3c87d sm-enabled">
+				 
+				 <p data-id="paragraph-1" class=" sc-text-block sc-paragraph">
+					 <span data-path="paragraph-1.content" class="sc-text-property" style="white-space:pre-wrap"></span>
+				 </p>
+		</div>
+	</div>
 	
-	  $("#hidden-text-for-" + identifier).val(data['text']);
-  }
+  <input id="hidden-text-for-user-e1515e043be1eff3c87d" 
+	       name="user[bio]" type="hidden"
+				 value="<p data-id=&quot;paragraph-1&quot;>jhgfkjrhkjrhlkrjlkrj<strong data-id=&quot;strong-48e33ff110e4b6443f3d59bd335e7657&quot;>lkr</strong></p>">
 ```
 
 #### Support

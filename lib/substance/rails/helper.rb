@@ -1,3 +1,5 @@
+require 'securerandom'
+
 module Substance
   module Rails
     module Helper
@@ -8,25 +10,30 @@ module Substance
       # -----------------------------------------------------------
       def substance_javascript_handler_for_text_areas
         <<-JAVASCRIPT
-          let area = $(".substance-text-area:first");
-          let formEvents = $._data($(area)[0], "events");
+          $( document ).ready(function() {
+            /* Locate all of the forms that contain a substance text area */
+            $('form').each(function(){
+              if($(this).has(".sc-rich-text-area")){
+                let form = this;
+                
+                $(form).submit(function(event){
+                  /* Loop through all of the form's substance text areas and handle them */
+                  $(form).find(".sc-rich-text-area .sc-container-editor").each(function(){
 
-          /* If the form does not already have a submit handler */          
-          if(formEvents.indexOf('submit') < 0){
-            /* Loop through all of the form's substance text areas and handle them */
-            $(area.form).submit(function(e){
-              $(".substance-text-area").each(function(){
-                let identifier = $(this).prop('id');
-                _handleChange(identifier);
-              });
+                    let identifier = $(this).attr('data-id');
+                    _transferContent(identifier);
+                  
+                  });
+                });
+              }
             });
-          }
-        
+          });
+          
           /* Transfer the contents of substance text area to the hidden field */
-          function _handleChange(identifier){
+          function _transferContent(identifier){
             let forms = window.substanceForms;
             let data = { 
-              text: forms.getHTML('substance-text-area-' + identifier) 
+              text: forms.getHTML(identifier) 
             };
 
             $("#hidden-text-for-" + identifier).val(data['text']);
@@ -38,18 +45,28 @@ module Substance
       # Create a Substance-Forms Text Area
       # -----------------------------------------------------------
       def substance_text_area_tag(obj, attribute_name)
-        identifier = "#{obj.class.name.downcase}-#{obj.id}"
+        if !obj.nil? && attribute_name.is_a?(String) && 
+                                  obj.respond_to?(attribute_name)
+          # Generate a unique identifier for the text area and its hidden field
+          identifier = "#{obj.class.name.downcase}-#{SecureRandom.hex(10)}";
         
-        <<-HTML
-        <div id="substance-text-area-#{identifier}" 
-             editable data-type="area" class="substance-text-area">
-          model.send(atrribute_name.to_sym)
-        </div>
+          # Substance Forms requires text area contents to be wrapped in a tag
+          text = obj.send(attribute_name.to_sym)
+          text = "<p>#{text}</p>" unless text.starts_with?("<")
+      
+          # Produce a text-area for substance and a hidden field for Rails
+          <<-HTML
+          <div id="#{identifier}" editable data-type="area">
+            "#{text.html_safe}"
+          </div>
 
-        <input type="hidden" id="hidden-text-for-#{identifier}" 
-               name="#{obj.class.name.downcase}[attribute]" 
-               val="#{obj.send(attribute_name.to_sym)}" />
-        HTML
+          <input type="hidden" id="hidden-text-for-#{identifier}" 
+                 name="#{obj.class.name.downcase}[#{attribute_name}]" />
+          HTML
+          
+        else
+          raise "substance-rails requires you to provide a valid obj and attribute_name. The Object must be able to responde to Object.attribute_name"
+        end
       end
       
     end
